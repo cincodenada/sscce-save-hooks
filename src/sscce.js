@@ -14,6 +14,21 @@ const log = require('./utils/log');
 const sinon = require('sinon');
 const { expect } = require('chai');
 
+async function setUpModels(sequelize) {
+  const OutUser = sequelize.define('OutUser', {
+    name: DataTypes.TEXT,
+  }, { underscored: true });
+  const OutWallet = sequelize.define('OutWallet', {
+    name: DataTypes.TEXT,
+  }, { underscored: true });
+  OutUser.hasMany(OutWallet)
+  OutWallet.belongsTo(OutUser)
+
+  await sequelize.sync();
+
+  return OutUser
+}
+
 // Your SSCCE goes inside this function.
 module.exports = async function() {
   const sequelize = createSequelizeInstance({
@@ -24,13 +39,8 @@ module.exports = async function() {
     }
   });
 
-  const Foo = sequelize.define('Foo', { name: DataTypes.TEXT });
+  const OutUser = await setUpModels(sequelize)
 
-  const spy = sinon.spy();
-  sequelize.afterBulkSync(() => spy());
-  await sequelize.sync();
-  expect(spy).to.have.been.called;
-
-  log(await Foo.create({ name: 'foo' }));
-  expect(await Foo.count()).to.equal(1);
+  OutUser.create({name: 'foo'})
+  await OutUser.findOne({where: {}, include: 'OutWallets'})
 };
