@@ -24,13 +24,44 @@ module.exports = async function() {
     }
   });
 
-  const Foo = sequelize.define('Foo', { name: DataTypes.TEXT });
+  const Pair = sequelize.define('Pair', {
+    a: {
+      type: DataTypes.INTEGER,
+      set: function(value, field) {
+        this.setDataValue(field, value)
+        this.set('product', this.product)
+      }
+    },
+    b: {
+      type: DataTypes.INTEGER,
+      set: function(value, field) {
+        this.setDataValue(field, value)
+        this.set('product', this.product)
+      }
+    },
+    sum: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0
+    },
+    product: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+      get() {
+        return this.a * this.b
+      }
+    }
+  });
+  // Sum - using hooks
+  Pair.beforeSave(function(instance, options) {
+    instance.set('sum', instance.a+instance.b)
+  })
 
-  const spy = sinon.spy();
-  sequelize.afterBulkSync(() => spy());
   await sequelize.sync();
-  expect(spy).to.have.been.called;
 
-  log(await Foo.create({ name: 'foo' }));
-  expect(await Foo.count()).to.equal(1);
+  log(await Pair.create({ a: 2, b: 3 }));
+  const result = await Pair.findOne();
+  expect(result.sum).to.equal(5);
+  expect(result.product).to.equal(6);
 };
