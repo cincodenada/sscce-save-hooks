@@ -30,6 +30,7 @@ module.exports = async function() {
       set: function(value, field) {
         this.setDataValue(field, value)
         this.set('product', this.product)
+        this.set('dividend', this.a/this.b)
       }
     },
     b: {
@@ -37,6 +38,7 @@ module.exports = async function() {
       set: function(value, field) {
         this.setDataValue(field, value)
         this.set('product', this.product)
+        this.set('dividend', this.a/this.b)
       }
     },
     sum: {
@@ -51,6 +53,11 @@ module.exports = async function() {
       get() {
         return this.a * this.b
       }
+    },
+    dividend: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0
     }
   });
   // Sum - using hooks
@@ -60,8 +67,13 @@ module.exports = async function() {
 
   await sequelize.sync();
 
-  log(await Pair.create({ a: 2, b: 3 }));
+  const pair = Pair.build({ a: 3, b: 2 });
+  console.log('Sum before save:', pair.sum);
+  console.log('Product before save:', pair.product);
+  console.log('Dividend before save:', pair.dividend);
+  await pair.save()
   const result = await Pair.findOne();
   expect(result.sum).to.equal(5);
   expect(result.product).to.equal(6);
+  expect(result.dividend).to.equal(1.5);
 };
